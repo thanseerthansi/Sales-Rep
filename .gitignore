@@ -1,4 +1,5 @@
 /senv
+/.vscode
 /sales/.vscode
 /sales/salesenv
 /sales/media
