@@ -215,7 +215,7 @@ class OrderView(ListAPIView):
             order_obj.is_valid(raise_exception=True)
             order_data = order_obj.save(customer=customer,employee=employee)
             # print("oredrdat",order_data.id)
-            if id: 
+            if id:  
                 pass
             else:
                 # print("dataproduct",self.request.data['product'])
