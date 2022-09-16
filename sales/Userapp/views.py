@@ -14,8 +14,10 @@ class AreaView(ListAPIView):
         try:
             id= self.request.GET.get('id')
             area= self.request.GET.get('area')
+            route = self.request.GET.get('route')
             qs = AreaModel.objects.all().select_related('route')
             if id: qs=qs.filter(id=id)
+            if route : qs = qs.filter(route__id=route) 
             if area: qs=qs.filter(area_name=area)
             return qs
         except : return None
@@ -25,29 +27,39 @@ class AreaView(ListAPIView):
         # superuser = self.request.user.is_superuser
         # if superuser == True  :
         try:
-            id = self.request.POST.get('id','') 
-            route = self.request.POST.get('route','')       
+            # print("fdaat",self.request.data)
+            # id = self.request.POST.get('id','') 
+            try :id=self.request.data['id']                  
+            except: id=''
+            try :route=self.request.data['route']                  
+            except: route=''
+            # route = self.request.POST.get('route','')     
+            # print("route",route)
             if route:
-                    route_qs = RouteModel.objects.filter(route=route)
-                    if route_qs.count():
-                        route_qs = route_qs.first()             
+                # print("route",route) 
+                route_qs = RouteModel.objects.filter(id=route)
+                # print("ook",route_qs) 
+                if route_qs.count():
+                    # print("ookcount") 
+                    route_qs = route_qs.first()   
+                             
             if id:                 
-                if id.isdigit():
-                    area_qs = AreaModel.objects.filter(id=id)
-                    if area_qs.count():
-                        area_qs = area_qs.first()
-                        if not route:route_qs = area_qs.route
-                        area_obj = AreaSerializer(area_qs,data=self.request.data,partial=True)
-                        msg = "Updated Successfully"
-                    else:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"No Record Found with given id"})                    
-                else:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":"Provide valid id "})
+                # if id.isdigit():
+                area_qs = AreaModel.objects.filter(id=id)
+                if area_qs.count():
+                    area_qs = area_qs.first()
+                    if not route:route_qs = area_qs.route
+                    area_obj = AreaSerializer(area_qs,data=self.request.data,partial=True)
+                    msg = "Updated Successfully"
+                else:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"No Record Found with given id"})                    
+                # else:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":"Provide valid id "})
             else:
                 area_obj = AreaSerializer(data=self.request.data,partial=True)
                 msg = "Created Successfully"
             area_obj.is_valid(raise_exception=True)
             area_obj.save(route=route_qs)
             return Response({"Status":status.HTTP_200_OK,"Message":msg})
-        except Exception as e:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":e})
+        except Exception as e:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e)})
 
     def delete(self,request):      
         try:
@@ -58,7 +70,7 @@ class AreaView(ListAPIView):
                 return Response({"Status":status.HTTP_200_OK,"Message":"Deleted successfully"})
             else:return Response({"Staus":status.HTTP_404_NOT_FOUND,"Message":"No Records found with given id"})
         except Exception as e :
-            return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":e})
+            return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e)})
 
 class RouteView(ListAPIView):
     serializer_class = RouteSerializer
@@ -66,39 +78,51 @@ class RouteView(ListAPIView):
     permission_classes = (IsAuthenticated,)
     def get_queryset(self):
         try:
+            # print("post",self.request.POST.get('id',''))
+            # print("data",self.request.data)
+            # print("get",self.request.GET.get('id'))
             id = self.request.GET.get('id','')
             qs = RouteModel.objects.all()
             if id: qs = qs.filter(id=id)
             return qs
         except : return None
     def post(self,request):   
-        # isadmin = self.request.user.is_admin
-        superuser = self.request.user.is_superuser
+        # isadmin = self.request.user.is_admin  
+        superuser = self.request.user.is_superuser 
         if superuser == True  :
             try:
-                id = self.request.POST.get("id","")                     
+                id=''
+                try : 
+                    id=self.request.data['id']       
+                except: id=''   
+                print("fcgid",id)                 
                 if id: 
-                    if id.isdigit():
-                        route_qs = RouteModel.objects.filter(id=id)
-                        if route_qs.count():
-                            route_qs = route_qs.first()
-                            route_obj = RouteSerializer(route_qs,data=self.request.data,partial=True)
-                            msg = "Updated Successfully"
-                        else:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"No Record Found with given id"})                    
-                    else:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":"Provide valid id "})
+                    # if id.isdigit():
+                    route_qs = RouteModel.objects.filter(id=id)
+                    if route_qs.count():
+                        route_qs = route_qs.first()
+                        print("okup")
+                        route_obj = RouteSerializer(route_qs,data=self.request.data,partial=True)
+                        msg = "Updated Successfully"
+                        print("u[date")
+                    else:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"No Record Found with given id"})                    
+                    # else:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":"Provide valid id "})
                 else:
                     route_obj = RouteSerializer(data=self.request.data,partial=True)
                     msg = "Created Successfully"
+                    print("creat")
                 route_obj.is_valid(raise_exception=True)
                 route_obj.save()
                 return Response({"Status":status.HTTP_200_OK,"Message":msg})
-            except Exception as e:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":e})
+            except Exception as e:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e)})
         else:return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":"Not Autherized"})
 
     def delete(self,request):
         superuser = self.request.user.is_superuser
+        # print("iddd",self.request.data['id'])     
         try:
             if superuser == True:
+                # print("iddd",self.request.data)
                 id = self.request.data['id']
                 object = RouteModel.objects.filter(id=id)
                 if object.count():
@@ -107,7 +131,7 @@ class RouteView(ListAPIView):
                 else:return Response({"Staus":status.HTTP_404_NOT_FOUND,"Message":"No Records found with given id"})
             else:return Response({"Stauts":status.HTTP_400_BAD_REQUEST,"Message":"Not autherized"})
         except Exception as e :
-            return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":e})
+            return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e)})
 
 
 class UserView(ListAPIView):
@@ -116,18 +140,27 @@ class UserView(ListAPIView):
     permission_classes =(AllowAny,)
     
     def get_queryset(self):
+
         try:
-            customer = self.request.GET.get("customer",'')#any value to filter customer
+            # print("post",self.request.POST.get('id',''))
+            # print("data",self.request.data)
+            # print("get",self.request.GET.get('employee'))
+            id = self.request.GET.get('id')
+            customer = self.request.GET.get("is_customer",'')#any value to filter customer
             # admin = self.request.GET.get("admin",'')#any value to filter all  partners
             user = self.request.GET.get('user') #to filter all employees 
             contact = self.request.GET.get('contact')
-            employee = self.request.GET.get('employee')
+            employee = self.request.GET.get('is_employee')
+            route = self.request.GET.get('route')
             userid = self.request.user.id
             qs = UserModel.objects.all()
+            if id:qs = qs.filter(id=id)
             if user: qs = qs.filter(id=userid)
             # if admin: qs  = qs.filter(is_partner=True)
             if employee: qs  = qs.filter(is_employee=True)
+            if customer: qs  = qs.filter(is_customer=True)
             if contact: qs=qs.filter(contact=contact)
+            if route : qs=qs.filter(route__route=route)
             return qs
         except Exception as e:
             # print("euser",e)
@@ -135,35 +168,57 @@ class UserView(ListAPIView):
 
     def post(self,request):
         userobj = ""
-        id = self.request.POST.get("id","")
-        contact = self.request.POST.get("contact",'')
-        username = self.request.POST.get("username",'')
-        mandatory = ['contact','username']
-        data = Validate(self.request.data,mandatory)
-        # print("contact",self.request.data['contact'])
-        
-        if contact:
-            contact_listqs = list(UserModel.objects.all().values_list('contact',flat=True)) 
-            if contact in contact_listqs:return Response({"Status":status.HTTP_208_ALREADY_REPORTED,"Message":"Number Already Exist"})
-        # print("userjname",self.request.POST.get('username'))
-        if id:
-            if id.isdigit():
+        try: id = self.request.data['id']
+        except:id=''
+        try: contact = self.request.data['contact']
+        except:contact=''
+        try: username = self.request.data['username']
+        except:username=''
+        try: route = self.request.data['route']
+        except:route=''
+        try: area = self.request.data['area']
+        except:area=''
+        try:
+            print("daa",self.request.data)
+            # id = self.request.POST.get("id","")
+            # contact = self.request.POST.get("contact",'')
+            # username = self.request.POST.get("username",'')
+            mandatory = ['contact','username']
+            data = Validate(self.request.data,mandatory)
+            # print("contact",self.request.data['contact'])
+            
+            if route:
+                route_qs = RouteModel.objects.filter(id=route)
+                if route_qs.count():route_qs = route_qs.first()
+            
+            if area:
+                area_qs = AreaModel.objects.filter(id=area)
+                if area_qs.count():area_qs = area_qs.first()
+            # print("userjname",self.request.POST.get('username'))
+            print("okok")
+            if id:
+                # if id.isdigit():
                 try:
-                    # print("datapost",self.request.data)
+                    print("datapost",self.request.data)
                     user = UserModel.objects.filter(id=id)
                     if user.count():
                         user = user.first()
                     else:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"User not found"})
+                    if not route:route_qs = user.route
+                    if not area: area_qs = user.area
+                    if contact != user.contact:
+                        contact_listqs = list(UserModel.objects.all().values_list('contact',flat=True)) 
+                        if contact in contact_listqs:return Response({"Status":status.HTTP_208_ALREADY_REPORTED,"Message":"Number Already Exist"})
                     serializer = UserSerializer(user,data=request.data,partial= True)
                     serializer.is_valid(raise_exception=True)
                     email =  self.request.POST.get('email','')
                     if email:
                         msg = "user details and email updated successfully"
-                        user_obj = serializer.save(password = make_password(email))
+                        user_obj = serializer.save(password = make_password(email),route=route_qs)
                     else: 
                         msg = "User details updated successfully"
-                        user_obj = serializer.save()
-                  
+                        user_obj = serializer.save(route=route_qs,area=area_qs)
+                    
                     return Response({"Status":status.HTTP_200_OK,"Message":msg})
                 except Exception as e:
                     # print(f"Exception occured{e}")
@@ -173,25 +228,27 @@ class UserView(ListAPIView):
                         "Status":status.HTTP_400_BAD_REQUEST,
                         "Message":f"Excepction occured {e}"
                     })
-            else: return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":"Please provide valid user"})
-        else:
-            # print("id2",id)
-            # mandatory = ['username','email']
-            # data = Validate(self.request.data,mandatory)
-            if data == True:
-            
-                try:
-                    serializer = UserSerializer(data=request.data, partial=True)
-                    serializer.is_valid(raise_exception=True)
-
-                    msg = "Created New User"
-                    # user_obj = serializer.save(password=make_password(self.request.data['email']))    
-                    user_obj = serializer.save()
-                    # print("userserializer",user_obj)
-                    return Response({"Status":status.HTTP_200_OK,"Message":msg})
-                except Exception as e :
-                    return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e),})
-            else : return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":data})
+                # else: return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":"Please provide valid user"})
+            else:
+                # print("id2",id)
+                # mandatory = ['username','email']
+                # data = Validate(self.request.data,mandatory)
+                if contact:
+                    contact_listqs = list(UserModel.objects.all().values_list('contact',flat=True)) 
+                    if contact in contact_listqs:return Response({"Status":status.HTTP_208_ALREADY_REPORTED,"Message":"Number Already Exist"})
+                if data == True:                
+                    try:
+                        serializer = UserSerializer(data=request.data, partial=True)
+                        serializer.is_valid(raise_exception=True)
+                        msg = "Created New User"
+                        # user_obj = serializer.save(password=make_password(self.request.data['email']))    
+                        user_obj = serializer.save(route=route_qs,area=area_qs)
+                        # print("userserializer",user_obj)
+                        return Response({"Status":status.HTTP_200_OK,"Message":msg})
+                    except Exception as e :
+                        return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e),})
+                else : return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":data})
+        except Exception as e: return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e)})
     def delete(self,request):
         # isadmin = self.request.user.is_admin
         # superuser = self.request.user.is_superuser
@@ -203,11 +260,11 @@ class UserView(ListAPIView):
                 # print("obj",u_obj)
                 u_obj.delete()
         
-                return Response({"status":status.HTTP_200_OK,"message":"deleted successfully"})
-            else: return Response({"status":status.HTTP_404_NOT_FOUND,"message":"No records with given id" })
+                return Response({"Status":status.HTTP_200_OK,"Message":"deleted successfully"})
+            else: return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"No records with given id" })
             
         except Exception as e:
-            return Response({"status":status.HTTP_400_BAD_REQUEST,"message":str(e),})
+            return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e),})
         # else: return Response({"Status":False,"Message":"Something went wrong"})
             
 class WhoAmI(ListAPIView):
@@ -221,7 +278,6 @@ class WhoAmI(ListAPIView):
                 "Data":self.request.user.username   
             })
         except Exception as e: return Response({"Status":status.HTTP_400_BAD_REQUEST,"Message":str(e),})
-
 
         
 class LoginView(ObtainAuthToken):
@@ -252,6 +308,8 @@ class LoginView(ObtainAuthToken):
                 "excepction":str(e),
             })
 
+    
+
 
 class otpLogin(ObtainAuthToken):
     serializer_class = otpLoginSerializer
@@ -261,7 +319,9 @@ class otpLogin(ObtainAuthToken):
                                            context={'request': request})
         print(serializer)
         try:
-            contact = self.request.data['contact']
+            try:
+                contact = self.request.data['contact']
+            except: return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"Contact required"})
             print("contact",self.request.data['contact'])
             test = serializer.is_valid(raise_exception=True) 
             # user = serializer.validated_data['user']
@@ -277,6 +337,7 @@ class otpLogin(ObtainAuthToken):
                 'user_id': user.pk,
                 'username': user.username,
                 'is_superuser':user.is_superuser,
+                'is_customer':user.is_customer,
             })
             # else:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"Number Not found "})
         except Exception as e:
@@ -286,6 +347,16 @@ class otpLogin(ObtainAuthToken):
                 "Message":"incorrect number",
                 "excepction":str(e),
             })
+
+    def get(self,request):
+        try:
+            contact = self.request.GET.get('contact')
+            print("contat",contact)
+            user_qs = UserModel.objects.filter(contact=contact,is_superuser="False")
+            print(user_qs)
+            if user_qs.count():return Response({"Status":status.HTTP_200_OK,"Message":"contact is user "})
+            else:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":"Number not registered"})
+        except Exception as e:return Response({"Status":status.HTTP_404_NOT_FOUND,"Message":str(e)})
 
 class Logout(ListAPIView):
     authentication_classes = (TokenAuthentication,)
@@ -319,4 +390,4 @@ class Logout(ListAPIView):
 #                 else:return Response({"status":False,"Messsage":"not found"})
 #             else:return Response({"status":False,"Message":"user not found"})
 #         except Exception as e:
-#             return Response({"status":False,"Message":e})
+#             return Response({"status":False,"Message":str(e)})

@@ -15,12 +15,17 @@ class RouteModel(models.Model):
     created_date = models.DateTimeField(auto_now_add=True,null=True)
     updated_date  = models.DateField(auto_now=True,null=True)
 
+    
+
 class AreaModel(models.Model):
     area_name = models.CharField(max_length=100,null=True)
     route = models.ForeignKey(RouteModel,on_delete=models.CASCADE)
     description = models.TextField(null=True,blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+     
+    # def __str__(self):
+    #     return self.area_name
 
 class UserModel(AbstractUser):
     photo = models.ImageField(upload_to='Image',blank=True,null=True)
